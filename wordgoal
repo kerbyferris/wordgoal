@@ -1,0 +1,62 @@
+#! /usr/bin/python
+
+from subprocess import PIPE, run
+from sys import argv, exit
+from time import sleep
+
+help = """
+Usage: word-count [word count goal]
+
+ex) $ word-count 50000
+
+Where the goal is the first argument to the script,
+and any integer greater than zero.
+"""
+
+
+def get_current_word_count():
+    try:
+        cmd_output = run(["bookwords"], stdout=PIPE)
+        return int(cmd_output.stdout.decode("utf-8"))
+    except ValueError:
+        return None
+
+
+def get_msg(word_count_delta):
+    if word_count_delta <= 0:
+        return f"\rGoal reached! {abs(word_count_delta)} words over goal."
+    else:
+        return f"\r{word_count_delta} words to go."
+
+
+def main():
+    try:
+        word_count_goal_input = argv[1]
+        word_count_goal = int(word_count_goal_input)
+    except (IndexError, ValueError) as e:
+        print(f"{help}\n\nError: {e}")
+        exit()
+
+    try:
+        current_word_count = get_current_word_count()
+        if current_word_count is not None:
+            print("\n", get_msg(word_count_goal - current_word_count), end="")
+
+    except Exception as e:
+        print(f"Unable to determine current word count.\n\nError: {e}")
+        exit()
+
+    while True:
+        try:
+            new_wc = get_current_word_count()
+            if new_wc is not None and new_wc != current_word_count:
+                print(get_msg(word_count_goal - new_wc), end="")
+                current_word_count = new_wc
+            sleep(1)
+        except KeyboardInterrupt:
+            print("\n")
+            exit()
+
+
+if __name__ == "__main__":
+    main()
